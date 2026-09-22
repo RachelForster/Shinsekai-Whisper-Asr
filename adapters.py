@@ -379,6 +379,17 @@ class RealtimeSTTAdapter(ASRAdapter):
     def get_status(self) -> str:
         return "Running" if self._is_running else "Stopped"
 
+    def finish_hold(self, *, cancel: bool = False) -> bool:
+        """End one F8 utterance without destroying the resident model workers."""
+        if not self._is_running or self._recorder is None:
+            return False
+        _log.info(
+            "RealtimeSTT finishing hold (%s); keeping recorder warm",
+            "cancel" if cancel else "submit",
+        )
+        self.pause()
+        return True
+
     def pause(self) -> None:
         # sendMessage 与 TTS 都会 pause；勿在主线程（Qt 槽）里同步 abort()——库内 was_interrupted.wait 易死锁
         if self._paused:
